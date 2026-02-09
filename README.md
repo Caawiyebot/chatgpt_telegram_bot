@@ -56,6 +56,7 @@ You can deploy your own bot, or use mine: [@jadvebot](https://t.me/jadvebot) (Ou
 - `/retry` – Regenerate last bot answer
 - `/new` – Start new dialog
 - `/mode` – Select chat mode
+- `/courses` – Show Somali course menus
 - `/balance` – Show balance
 - `/settings` – Show settings
 - `/help` – Show help
@@ -75,6 +76,9 @@ You can deploy your own bot, or use mine: [@jadvebot](https://t.me/jadvebot) (Ou
     ```bash
     docker-compose --env-file config/config.env up --build
     ```
+
+## Somali course menu
+The course menu is configured in `config/courses.yml`. Update the Loom URLs with your real video links, and adjust titles/descriptions as needed. You can control pagination with `n_courses_per_page` in `config/config.yml`.  
 
 ## ❤️ Top donations
 You can be in this list:
