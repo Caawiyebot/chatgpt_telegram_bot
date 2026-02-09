@@ -21,11 +21,16 @@ enable_message_streaming = config_yaml.get("enable_message_streaming", True)
 return_n_generated_images = config_yaml.get("return_n_generated_images", 1)
 image_size = config_yaml.get("image_size", "512x512")
 n_chat_modes_per_page = config_yaml.get("n_chat_modes_per_page", 5)
+n_courses_per_page = config_yaml.get("n_courses_per_page", 8)
 mongodb_uri = f"mongodb://mongo:{config_env['MONGODB_PORT']}"
 
 # chat_modes
 with open(config_dir / "chat_modes.yml", 'r') as f:
     chat_modes = yaml.safe_load(f)
+
+# courses
+with open(config_dir / "courses.yml", 'r') as f:
+    courses = yaml.safe_load(f)
 
 # models
 with open(config_dir / "models.yml", 'r') as f:

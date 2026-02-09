@@ -41,16 +41,17 @@ user_semaphores = {}
 user_tasks = {}
 
 HELP_MESSAGE = """Commands:
-⚪ /retry – Regenerate last bot answer
-⚪ /new – Start new dialog
-⚪ /mode – Select chat mode
-⚪ /settings – Show settings
-⚪ /balance – Show balance
-⚪ /help – Show help
+⚪ /retry – Soo celi jawaabtii u dambaysay
+⚪ /new – Bilow sheeko cusub
+⚪ /mode – Dooro qaabka chat-ka
+⚪ /courses – Daawo casharrada Somaliga
+⚪ /settings – Dejinta
+⚪ /balance – Kharashka
+⚪ /help – Caawimaad
 
-🎨 Generate images from text prompts in <b>👩‍🎨 Artist</b> /mode
-👥 Add bot to <b>group chat</b>: /help_group_chat
-🎤 You can send <b>Voice Messages</b> instead of text
+🎨 Sawirro ka samee qoraal adigoo isticmaalaya <b>👩‍🎨 Artist</b> /mode
+👥 Ku dar bot-ka <b>group chat</b>: /help_group_chat
+🎤 Waad diri kartaa <b>Voice Messages</b> halkii qoraal
 """
 
 HELP_GROUP_CHAT_MESSAGE = """You can add bot to any <b>group chat</b> to help and entertain its participants!
@@ -136,7 +137,9 @@ async def start_handle(update: Update, context: CallbackContext):
     db.set_user_attribute(user_id, "last_interaction", datetime.now())
     db.start_new_dialog(user_id)
 
-    reply_text = "Hi! I'm <b>ChatGPT</b> bot implemented with OpenAI API 🤖\n\n"
+    reply_text = "Salaan! Waxaan ahay <b>@chelpbot</b> 🤖\n\n"
+    reply_text += "Waxaan kuu hayaa casharro Automation ah + casharro free oo Af-Soomaali ah.\n"
+    reply_text += "Ku billow /courses si aad u aragto menu-ga quruxda badan.\n\n"
     reply_text += HELP_MESSAGE
 
     await update.message.reply_text(reply_text, parse_mode=ParseMode.HTML)
@@ -625,6 +628,53 @@ def get_chat_mode_menu(page_index: int):
     return text, reply_markup
 
 
+def get_course_categories_menu():
+    text = "📚 <b>Dooro qaybta casharrada</b>:"
+    keyboard = []
+    for category_key, category in config.courses.items():
+        title = category["title"]
+        keyboard.append([InlineKeyboardButton(title, callback_data=f"show_course_category|{category_key}|0")])
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    return text, reply_markup
+
+
+def get_course_menu(category_key: str, page_index: int):
+    category = config.courses[category_key]
+    lessons = category["lessons"]
+    per_page = config.n_courses_per_page
+    text = f"{category['title']}\n{category['description']}\n\nDooro casharka:"
+    keyboard = []
+
+    start_index = page_index * per_page
+    end_index = start_index + per_page
+    page_lessons = lessons[start_index:end_index]
+    for offset, lesson in enumerate(page_lessons):
+        lesson_index = start_index + offset
+        keyboard.append(
+            [InlineKeyboardButton(lesson["title"], callback_data=f"open_course|{category_key}|{lesson_index}")]
+        )
+
+    if len(lessons) > per_page:
+        is_first_page = page_index == 0
+        is_last_page = end_index >= len(lessons)
+        if is_first_page:
+            keyboard.append([InlineKeyboardButton("»", callback_data=f"show_course_category|{category_key}|{page_index + 1}")])
+        elif is_last_page:
+            keyboard.append([InlineKeyboardButton("«", callback_data=f"show_course_category|{category_key}|{page_index - 1}")])
+        else:
+            keyboard.append(
+                [
+                    InlineKeyboardButton("«", callback_data=f"show_course_category|{category_key}|{page_index - 1}"),
+                    InlineKeyboardButton("»", callback_data=f"show_course_category|{category_key}|{page_index + 1}")
+                ]
+            )
+
+    keyboard.append([InlineKeyboardButton("🏠 Qaybaha", callback_data="show_course_categories")])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    return text, reply_markup
+
+
 async def show_chat_modes_handle(update: Update, context: CallbackContext):
     await register_user_if_not_exists(update, context, update.message.from_user)
     if await is_previous_message_not_answered_yet(update, context): return
@@ -633,6 +683,17 @@ async def show_chat_modes_handle(update: Update, context: CallbackContext):
     db.set_user_attribute(user_id, "last_interaction", datetime.now())
 
     text, reply_markup = get_chat_mode_menu(0)
+    await update.message.reply_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+
+
+async def show_courses_handle(update: Update, context: CallbackContext):
+    await register_user_if_not_exists(update, context, update.message.from_user)
+    if await is_previous_message_not_answered_yet(update, context): return
+
+    user_id = update.message.from_user.id
+    db.set_user_attribute(user_id, "last_interaction", datetime.now())
+
+    text, reply_markup = get_course_categories_menu()
     await update.message.reply_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
 
 
@@ -655,7 +716,87 @@ async def show_chat_modes_callback_handle(update: Update, context: CallbackConte
          await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
      except telegram.error.BadRequest as e:
          if str(e).startswith("Message is not modified"):
-             pass
+            pass
+
+
+async def show_course_categories_callback_handle(update: Update, context: CallbackContext):
+    await register_user_if_not_exists(update.callback_query, context, update.callback_query.from_user)
+    if await is_previous_message_not_answered_yet(update.callback_query, context): return
+
+    user_id = update.callback_query.from_user.id
+    db.set_user_attribute(user_id, "last_interaction", datetime.now())
+
+    query = update.callback_query
+    await query.answer()
+
+    text, reply_markup = get_course_categories_menu()
+    try:
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+    except telegram.error.BadRequest as e:
+        if str(e).startswith("Message is not modified"):
+            pass
+
+
+async def show_course_category_callback_handle(update: Update, context: CallbackContext):
+    await register_user_if_not_exists(update.callback_query, context, update.callback_query.from_user)
+    if await is_previous_message_not_answered_yet(update.callback_query, context): return
+
+    user_id = update.callback_query.from_user.id
+    db.set_user_attribute(user_id, "last_interaction", datetime.now())
+
+    query = update.callback_query
+    await query.answer()
+
+    _, category_key, page_index = query.data.split("|")
+    page_index = int(page_index)
+    if page_index < 0:
+        return
+
+    text, reply_markup = get_course_menu(category_key, page_index)
+    try:
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+    except telegram.error.BadRequest as e:
+        if str(e).startswith("Message is not modified"):
+            pass
+
+
+async def open_course_callback_handle(update: Update, context: CallbackContext):
+    await register_user_if_not_exists(update.callback_query, context, update.callback_query.from_user)
+    if await is_previous_message_not_answered_yet(update.callback_query, context): return
+
+    user_id = update.callback_query.from_user.id
+    db.set_user_attribute(user_id, "last_interaction", datetime.now())
+
+    query = update.callback_query
+    await query.answer()
+
+    _, category_key, lesson_index = query.data.split("|")
+    lesson_index = int(lesson_index)
+
+    category = config.courses[category_key]
+    lesson = category["lessons"][lesson_index]
+    lesson_url = lesson["url"]
+    page_index = lesson_index // config.n_courses_per_page
+
+    text = (
+        f"🎬 <b>{lesson['title']}</b>\n"
+        f"Qaybta: {category['title']}\n\n"
+        f"🔗 {lesson_url}\n\n"
+        "Haddii link-ga uusan shaqeyn, fadlan ii sheeg."
+    )
+    reply_markup = InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("▶️ Daawo Casharka", url=lesson_url)],
+            [InlineKeyboardButton("⬅️ Casharrada", callback_data=f"show_course_category|{category_key}|{page_index}")],
+            [InlineKeyboardButton("🏠 Qaybaha", callback_data="show_course_categories")]
+        ]
+    )
+
+    try:
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+    except telegram.error.BadRequest as e:
+        if str(e).startswith("Message is not modified"):
+            pass
 
 
 async def set_chat_mode_handle(update: Update, context: CallbackContext):
@@ -815,6 +956,7 @@ async def post_init(application: Application):
     await application.bot.set_my_commands([
         BotCommand("/new", "Start new dialog"),
         BotCommand("/mode", "Select chat mode"),
+        BotCommand("/courses", "Show Somali courses"),
         BotCommand("/retry", "Re-generate response for previous query"),
         BotCommand("/balance", "Show balance"),
         BotCommand("/settings", "Show settings"),
@@ -859,6 +1001,10 @@ def run_bot() -> None:
     application.add_handler(CommandHandler("mode", show_chat_modes_handle, filters=user_filter))
     application.add_handler(CallbackQueryHandler(show_chat_modes_callback_handle, pattern="^show_chat_modes"))
     application.add_handler(CallbackQueryHandler(set_chat_mode_handle, pattern="^set_chat_mode"))
+    application.add_handler(CommandHandler("courses", show_courses_handle, filters=user_filter))
+    application.add_handler(CallbackQueryHandler(show_course_categories_callback_handle, pattern="^show_course_categories$"))
+    application.add_handler(CallbackQueryHandler(show_course_category_callback_handle, pattern="^show_course_category"))
+    application.add_handler(CallbackQueryHandler(open_course_callback_handle, pattern="^open_course"))
 
     application.add_handler(CommandHandler("settings", settings_handle, filters=user_filter))
     application.add_handler(CallbackQueryHandler(set_settings_handle, pattern="^set_settings"))
