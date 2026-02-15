@@ -56,6 +56,7 @@ You can deploy your own bot, or use mine: [@jadvebot](https://t.me/jadvebot) (Ou
 - `/retry` – Regenerate last bot answer
 - `/new` – Start new dialog
 - `/mode` – Select chat mode
+- `/courses` – Show Somali course menus
 - `/balance` – Show balance
 - `/settings` – Show settings
 - `/help` – Show help
@@ -65,16 +66,20 @@ You can deploy your own bot, or use mine: [@jadvebot](https://t.me/jadvebot) (Ou
 
 2. Get your Telegram bot token from [@BotFather](https://t.me/BotFather)
 
-3. Edit `config/config.example.yml` to set your tokens and run 2 commands below (*if you're advanced user, you can also edit* `config/config.example.env`):
+3. Edit `config/config.example.yml` to set your tokens and run the commands below (*if you're advanced user, you can also edit* `config/config.example.env`):
     ```bash
     mv config/config.example.yml config/config.yml
     mv config/config.example.env config/config.env
+    cp config/links.example.yml config/links.yml
     ```
 
 4. 🔥 And now **run**:
     ```bash
     docker-compose --env-file config/config.env up --build
     ```
+
+## Somali bot menus
+Main menu buttons and external links (WhatsApp, registration, course links) are configured in `config/links.yml`. Use `config/links.example.yml` as a starting point and replace the URLs with your real links.  
 
 ## ❤️ Top donations
 You can be in this list:
