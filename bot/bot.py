@@ -138,9 +138,9 @@ async def start_handle(update: Update, context: CallbackContext):
     db.start_new_dialog(user_id)
 
     reply_text = (
-        "Salaan & soo dhawoow! Waxaan ahay <b>SOMALIBOTMASTER AI</b>.\n"
-        "Maxaa kaa caawin karaa?\n\n"
-        "Ogaysiisyo: @Ogaysiiyebot ama @fogaanaragbot."
+        "Salaan & soo dhawoow! Waxaan ahay <b>@Baahiyebot</b>.\n"
+        "Maxaa kaa caawinayaa?\n\n"
+        "Fadlan isticmaal menu-ga hoose si aad u bilowdo."
     )
 
     await update.message.reply_text(reply_text, parse_mode=ParseMode.HTML)
@@ -634,7 +634,7 @@ def get_link(link_key: str, fallback: str = "https://example.com"):
 
 
 def get_main_menu():
-    text = "📍 <b>Menu-ga ugu weyn</b>"
+    text = "📍 <b>Menu-ga @Baahiyebot</b>"
     keyboard = [
         [InlineKeyboardButton("📚 Koorso", callback_data="menu_courses")],
         [InlineKeyboardButton("👨‍💻 Talk Human", callback_data="menu_talk_human")],
@@ -646,35 +646,48 @@ def get_main_menu():
     return text, InlineKeyboardMarkup(keyboard)
 
 
-def get_courses_menu():
-    text = "📚 <b>Koorsooyinka</b>\nDooro qaybta:"
+def get_courses_home_menu():
+    text = "📚 <b>Koorsooyinka AI iyo Technology</b>"
     keyboard = [
-        [InlineKeyboardButton("🆓 Free", callback_data="courses_free")],
-        [InlineKeyboardButton("💎 Paid", callback_data="courses_paid")],
+        [InlineKeyboardButton("🔵 KOORSADA 1: 40 Cashar oo AI ah", callback_data="course|ai40|0")],
+        [InlineKeyboardButton("🟢 KOORSADA 2: 14 Maalmood AI Video Editing", callback_data="course|video14|0")],
+        [InlineKeyboardButton("🟠 KOORSADA 3: Dropshipping & Zendrop AI", callback_data="course|dropshipping10|0")],
+        [InlineKeyboardButton("📌 Bogga Koorsada", url=get_link("course_page", "https://mfaratoon-nebvh2nc.manus.space/course"))],
         [InlineKeyboardButton("🏠 Home", callback_data="main_menu")],
     ]
     return text, InlineKeyboardMarkup(keyboard)
 
 
-def get_free_courses_menu():
+def get_course_page_menu(course_key: str, page_index: int):
+    course = config.courses[course_key]
+    lessons = course["lessons"]
+    per_page = 8
+
+    start = page_index * per_page
+    end = min(start + per_page, len(lessons))
+
     text = (
-        "Waxaan bixinaa koorsooyinka Somali ee ugu horreeya ee AI chatbots ah, "
-        "adigoo aan u baahnayn programming.\n"
-        "Waxaan kaa caawinaynaa in aad AI uga shaqaysato phone ama computer, "
-        "sidoo kale video editing adigoo adeegsanaya AI.\n\n"
-        "Koorsooyinka free ee bulshada waxaan ka mid ah:"
+        f"{course['title']}\n\n"
+        f"{course['description']}\n\n"
+        f"Dooro casharka ({start + 1}-{end}/{len(lessons)}):"
     )
-    keyboard = [
-        [InlineKeyboardButton("🤖 AI Chatbot", callback_data="free_ai_chatbot")],
-        [InlineKeyboardButton("🎬 AI Video Editing", callback_data="free_ai_video")],
-        [InlineKeyboardButton("⚙️ AI Automation", callback_data="free_ai_automation")],
-        [InlineKeyboardButton("🛍️ AI Shopify", callback_data="free_ai_shopify")],
-        [InlineKeyboardButton("🎞️ Adobe Premiere Pro", callback_data="free_adobe_premiere")],
-        [InlineKeyboardButton("🧠 Basic Language", callback_data="free_basic_language")],
-        [InlineKeyboardButton("📚 Intermediate Language", callback_data="free_intermediate_language")],
-        [InlineKeyboardButton("⬅️ Back", callback_data="menu_courses")],
-        [InlineKeyboardButton("🏠 Home", callback_data="main_menu")],
-    ]
+    keyboard = []
+    for lesson in lessons[start:end]:
+        keyboard.append([InlineKeyboardButton(lesson["title"], url=lesson["url"])])
+
+    nav = []
+    if page_index > 0:
+        nav.append(InlineKeyboardButton("⬅️ Prev", callback_data=f"course|{course_key}|{page_index - 1}"))
+    if end < len(lessons):
+        nav.append(InlineKeyboardButton("➡️ Next", callback_data=f"course|{course_key}|{page_index + 1}"))
+    if nav:
+        keyboard.append(nav)
+
+    keyboard.append([InlineKeyboardButton("👥 WhatsApp AI-Chatbot", url=get_link("wa_ai_chatbot", "https://chat.whatsapp.com/KzkcjwraeYhCsUXaexgNyM"))])
+    keyboard.append([InlineKeyboardButton("🎬 WhatsApp AI Video", url=get_link("wa_ai_video", "https://chat.whatsapp.com/G9phNqLyJ3L2RV4lprLUb7"))])
+    keyboard.append([InlineKeyboardButton("⚙️ WhatsApp AI Automation", url=get_link("wa_ai_automation", "https://chat.whatsapp.com/BRk1xgsg4ohKAaWN7oDRIe"))])
+    keyboard.append([InlineKeyboardButton("⬅️ Back", callback_data="menu_courses")])
+    keyboard.append([InlineKeyboardButton("🏠 Home", callback_data="main_menu")])
     return text, InlineKeyboardMarkup(keyboard)
 
 
@@ -696,7 +709,7 @@ async def show_courses_handle(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     db.set_user_attribute(user_id, "last_interaction", datetime.now())
 
-    text, reply_markup = get_courses_menu()
+    text, reply_markup = get_courses_home_menu()
     await update.message.reply_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
 
 
@@ -761,7 +774,7 @@ async def menu_courses_callback_handle(update: Update, context: CallbackContext)
     query = update.callback_query
     await query.answer()
 
-    text, reply_markup = get_courses_menu()
+    text, reply_markup = get_courses_home_menu()
     try:
         await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
     except telegram.error.BadRequest as e:
@@ -769,9 +782,10 @@ async def menu_courses_callback_handle(update: Update, context: CallbackContext)
             pass
 
 
-async def courses_free_callback_handle(update: Update, context: CallbackContext):
+async def course_callback_handle(update: Update, context: CallbackContext):
     await register_user_if_not_exists(update.callback_query, context, update.callback_query.from_user)
-    if await is_previous_message_not_answered_yet(update.callback_query, context): return
+    if await is_previous_message_not_answered_yet(update.callback_query, context):
+        return
 
     user_id = update.callback_query.from_user.id
     db.set_user_attribute(user_id, "last_interaction", datetime.now())
@@ -779,227 +793,10 @@ async def courses_free_callback_handle(update: Update, context: CallbackContext)
     query = update.callback_query
     await query.answer()
 
-    text, reply_markup = get_free_courses_menu()
-    try:
-        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
-    except telegram.error.BadRequest as e:
-        if str(e).startswith("Message is not modified"):
-            pass
+    _, course_key, page_str = query.data.split("|")
+    page_index = max(0, int(page_str))
 
-
-async def courses_paid_callback_handle(update: Update, context: CallbackContext):
-    await register_user_if_not_exists(update.callback_query, context, update.callback_query.from_user)
-    if await is_previous_message_not_answered_yet(update.callback_query, context): return
-
-    user_id = update.callback_query.from_user.id
-    db.set_user_attribute(user_id, "last_interaction", datetime.now())
-
-    query = update.callback_query
-    await query.answer()
-
-    text = (
-        "Waxaa jira koorsooyin premium ah oo leh lacag bille ah.\n"
-        "Waxaad heli doontaa casharro gaar ah 4 habeen usbuucii.\n"
-        "La xiriir macallinka & AI Team:"
-    )
-    reply_markup = InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton("💎 Paid Group", url=get_link("paid_group"))],
-            [InlineKeyboardButton("📲 Telegram ID: @Mfaratoon", url="https://t.me/Mfaratoon")],
-            [InlineKeyboardButton("👥 WhatsApp Community", url=get_link("whatsapp_community"))],
-            [InlineKeyboardButton("⬅️ Back", callback_data="menu_courses")],
-            [InlineKeyboardButton("🏠 Home", callback_data="main_menu")],
-        ]
-    )
-    try:
-        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
-    except telegram.error.BadRequest as e:
-        if str(e).startswith("Message is not modified"):
-            pass
-
-
-async def free_ai_chatbot_callback_handle(update: Update, context: CallbackContext):
-    await register_user_if_not_exists(update.callback_query, context, update.callback_query.from_user)
-    if await is_previous_message_not_answered_yet(update.callback_query, context): return
-
-    user_id = update.callback_query.from_user.id
-    db.set_user_attribute(user_id, "last_interaction", datetime.now())
-
-    query = update.callback_query
-    await query.answer()
-
-    text = (
-        "Halkan waxaad ku baranaysaa sida loo sameeyo chatbots aamusnaan leh, "
-        "adigoo aan hore uga soo shaqayn IT ama programming.\n"
-        "Waxaad samaynaysaa Telegram, WhatsApp, iyo Messenger chatbots."
-    )
-    reply_markup = InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton("📝 Register Here", url=get_link("register_form"))],
-            [InlineKeyboardButton("🎥 AI Automation and Chatbots Course", url=get_link("ai_automation_course"))],
-            [InlineKeyboardButton("👥 WhatsApp Community", url=get_link("whatsapp_community"))],
-            [InlineKeyboardButton("⬅️ Back", callback_data="courses_free")],
-            [InlineKeyboardButton("🏠 Home", callback_data="main_menu")],
-        ]
-    )
-    try:
-        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
-    except telegram.error.BadRequest as e:
-        if str(e).startswith("Message is not modified"):
-            pass
-
-
-async def free_ai_video_callback_handle(update: Update, context: CallbackContext):
-    await register_user_if_not_exists(update.callback_query, context, update.callback_query.from_user)
-    if await is_previous_message_not_answered_yet(update.callback_query, context): return
-
-    user_id = update.callback_query.from_user.id
-    db.set_user_attribute(user_id, "last_interaction", datetime.now())
-
-    query = update.callback_query
-    await query.answer()
-
-    text = (
-        "Waxaa jira 9 cashar oo free ah oo ka hadlaya hababka ugu dambeeya ee video editing "
-        "iyadoo la adeegsanayo adeegyo iyo websites casri ah.\n"
-        "Casharrada 9-ka ah waxaad ka heli kartaa hoos:"
-    )
-    reply_markup = InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton("🎬 9 AI Video Editing Lessons", url=get_link("ai_video_lessons"))],
-            [InlineKeyboardButton("👥 WhatsApp Group", url=get_link("whatsapp_group"))],
-            [InlineKeyboardButton("🌐 WhatsApp Community", url=get_link("whatsapp_community"))],
-            [InlineKeyboardButton("⬅️ Back", callback_data="courses_free")],
-            [InlineKeyboardButton("🏠 Home", callback_data="main_menu")],
-        ]
-    )
-    try:
-        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
-    except telegram.error.BadRequest as e:
-        if str(e).startswith("Message is not modified"):
-            pass
-
-
-async def free_ai_automation_callback_handle(update: Update, context: CallbackContext):
-    await free_ai_chatbot_callback_handle(update, context)
-
-
-async def free_ai_shopify_callback_handle(update: Update, context: CallbackContext):
-    await register_user_if_not_exists(update.callback_query, context, update.callback_query.from_user)
-    if await is_previous_message_not_answered_yet(update.callback_query, context): return
-
-    user_id = update.callback_query.from_user.id
-    db.set_user_attribute(user_id, "last_interaction", datetime.now())
-
-    query = update.callback_query
-    await query.answer()
-
-    text = (
-        "Kani waa cashar ku saabsan AI Shopify, si aad u barato dukaameysi casri ah "
-        "oo AI lagu xoojiyay. Faahfaahinta iyo links-ka waxaan ku soo dari doonaa."
-    )
-    reply_markup = InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton("👥 WhatsApp Community", url=get_link("whatsapp_community"))],
-            [InlineKeyboardButton("⬅️ Back", callback_data="courses_free")],
-            [InlineKeyboardButton("🏠 Home", callback_data="main_menu")],
-        ]
-    )
-    try:
-        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
-    except telegram.error.BadRequest as e:
-        if str(e).startswith("Message is not modified"):
-            pass
-
-
-async def free_adobe_premiere_callback_handle(update: Update, context: CallbackContext):
-    await register_user_if_not_exists(update.callback_query, context, update.callback_query.from_user)
-    if await is_previous_message_not_answered_yet(update.callback_query, context): return
-
-    user_id = update.callback_query.from_user.id
-    db.set_user_attribute(user_id, "last_interaction", datetime.now())
-
-    query = update.callback_query
-    await query.answer()
-
-    text = (
-        "Qeybtan waxay ka kooban tahay casharro fudud oo sharxaya video editing "
-        "using Adobe Premiere Pro CC 2020.\n"
-        "Casharkan wuxuu u yahay dadka doonaya in ay bartaan basics-ka."
-    )
-    reply_markup = InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton("📲 Telegram Group", url=get_link("telegram_premiere_group"))],
-            [InlineKeyboardButton("⬅️ Back", callback_data="courses_free")],
-            [InlineKeyboardButton("🏠 Home", callback_data="main_menu")],
-        ]
-    )
-    try:
-        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
-    except telegram.error.BadRequest as e:
-        if str(e).startswith("Message is not modified"):
-            pass
-
-
-async def free_intermediate_language_callback_handle(update: Update, context: CallbackContext):
-    await register_user_if_not_exists(update.callback_query, context, update.callback_query.from_user)
-    if await is_previous_message_not_answered_yet(update.callback_query, context): return
-
-    user_id = update.callback_query.from_user.id
-    db.set_user_attribute(user_id, "last_interaction", datetime.now())
-
-    query = update.callback_query
-    await query.answer()
-
-    text = (
-        "Waxaan haynaa koorsooyin Somali-English free ah oo loogu talagalay self learners.\n\n"
-        "📌 @somalienglish1 Section 1: General Information\n\n"
-        "Haddii aad intermediate tahay, koorsadan waa socotaa oo si weyn kuu horumarin doonta.\n"
-        "Fadlan raac ID-ga hoose oo ku biir:\n"
-        "📚 @somalienglish1\n\n"
-        "Sidoo kale bot-ka @maseexatobot wuu kaa caawinayaa. Fadlan mar walba isticmaal “/”."
-    )
-    reply_markup = InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton("📚 @somalienglish1", url="https://t.me/somalienglish1")],
-            [InlineKeyboardButton("🤖 @maseexatobot", url="https://t.me/maseexatobot")],
-            [InlineKeyboardButton("⬅️ Back", callback_data="courses_free")],
-            [InlineKeyboardButton("🏠 Home", callback_data="main_menu")],
-        ]
-    )
-    try:
-        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
-    except telegram.error.BadRequest as e:
-        if str(e).startswith("Message is not modified"):
-            pass
-
-
-async def free_basic_language_callback_handle(update: Update, context: CallbackContext):
-    await register_user_if_not_exists(update.callback_query, context, update.callback_query.from_user)
-    if await is_previous_message_not_answered_yet(update.callback_query, context): return
-
-    user_id = update.callback_query.from_user.id
-    db.set_user_attribute(user_id, "last_interaction", datetime.now())
-
-    query = update.callback_query
-    await query.answer()
-
-    text = (
-        "Here is the Basic Language Class.\n"
-        "Koorsadan waa basic, waxaana casharro bixinaya macallimiin Soomaali ah "
-        "oo iskaa wax u qabso ah.\n\n"
-        "Fadlan eeg ID-ga hoose:\n"
-        "📘 @somalienglish3\n\n"
-        "Sidoo kale bot-ka @maseexatobot wuu kaa caawinayaa. Fadlan mar walba isticmaal “/”."
-    )
-    reply_markup = InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton("📘 @somalienglish3", url="https://t.me/somalienglish3")],
-            [InlineKeyboardButton("🤖 @maseexatobot", url="https://t.me/maseexatobot")],
-            [InlineKeyboardButton("⬅️ Back", callback_data="courses_free")],
-            [InlineKeyboardButton("🏠 Home", callback_data="main_menu")],
-        ]
-    )
+    text, reply_markup = get_course_page_menu(course_key, page_index)
     try:
         await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=ParseMode.HTML)
     except telegram.error.BadRequest as e:
@@ -1018,23 +815,22 @@ async def menu_talk_human_callback_handle(update: Update, context: CallbackConte
     await query.answer()
 
     text = (
-        "Contact Information\n\n"
+        "📞 Contact Information\n\n"
         "📱 Telegram: @Mfaratoon\n\n"
         "💬 WhatsApp Rooms:\n"
-        "AI BOT (Automation) 4 Days Course\n"
-        "AI Video Editing\n"
-        "AI Learning Class\n"
-        "AI Training Team & Loom Free Screen Recording"
+        "• AI BOT (Automation) 4 Days Course\n"
+        "• AI Video Editing\n"
+        "• AI Learning Class\n"
+        "• AI Training Team & Loom Free Screen Recording"
     )
     reply_markup = InlineKeyboardMarkup(
         [
             [InlineKeyboardButton("📲 Telegram: @Mfaratoon", url="https://t.me/Mfaratoon")],
-            [InlineKeyboardButton("💬 AI BOT (Automation) 4 Days Course", url=get_link("whatsapp_automation_course"))],
-            [InlineKeyboardButton("🎥 AI Video Editing", url=get_link("whatsapp_video_editing"))],
-            [InlineKeyboardButton("📚 AI Learning Class", url=get_link("whatsapp_learning_class"))],
-            [InlineKeyboardButton("🎬 AI Training Team & Loom", url=get_link("whatsapp_training_team"))],
+            [InlineKeyboardButton("🤖 AI BOT (Automation)", url=get_link("wa_ai_automation", "https://chat.whatsapp.com/BRk1xgsg4ohKAaWN7oDRIe"))],
+            [InlineKeyboardButton("🎥 AI Video Editing", url=get_link("wa_ai_video", "https://chat.whatsapp.com/G9phNqLyJ3L2RV4lprLUb7"))],
+            [InlineKeyboardButton("📚 AI Learning Class", url=get_link("wa_ai_chatbot", "https://chat.whatsapp.com/KzkcjwraeYhCsUXaexgNyM"))],
+            [InlineKeyboardButton("🎬 AI Training Team", url=get_link("substack", "https://mfaratoon.substack.com/"))],
             [InlineKeyboardButton("⬅️ Back", callback_data="main_menu")],
-            [InlineKeyboardButton("🏠 Home", callback_data="main_menu")],
         ]
     )
     try:
@@ -1054,7 +850,7 @@ async def menu_talk_bot_callback_handle(update: Update, context: CallbackContext
     query = update.callback_query
     await query.answer()
 
-    text = "🤖 Waan diyaar ahay! I soo qor su'aashaada ama waxa aad rabto in aan kaa caawiyo."
+    text = "🤖 Waan diyaar ahay! Fadlan ii qor su'aashaada ama isticmaal /mode."
     reply_markup = InlineKeyboardMarkup(
         [[InlineKeyboardButton("🏠 Home", callback_data="main_menu")]]
     )
@@ -1075,13 +871,15 @@ async def menu_contacts_callback_handle(update: Update, context: CallbackContext
     query = update.callback_query
     await query.answer()
 
-    text = "🛂 Contacts:\n📲 Telegram: @Mfaratoon\n👥 WhatsApp Community: link hoose."
+    text = "🛂 Contacts & Channels"
     reply_markup = InlineKeyboardMarkup(
         [
-            [InlineKeyboardButton("📲 Telegram: @Mfaratoon", url="https://t.me/Mfaratoon")],
-            [InlineKeyboardButton("👥 WhatsApp Community", url=get_link("whatsapp_community"))],
+            [InlineKeyboardButton("📢 Telegram Updates", url=get_link("telegram_updates", "https://t.me/+eJxxMKtunMcwODhk"))],
+            [InlineKeyboardButton("🧰 Free AI Tools & Tips", url=get_link("telegram_tools", "https://t.me/Farsamada"))],
+            [InlineKeyboardButton("📺 YouTube", url=get_link("youtube", "https://m.youtube.com/user/MrFaraton"))],
+            [InlineKeyboardButton("📘 Facebook", url=get_link("facebook", "https://www.facebook.com/soomaalipodcast"))],
+            [InlineKeyboardButton("✍️ Substack", url=get_link("substack", "https://mfaratoon.substack.com/"))],
             [InlineKeyboardButton("⬅️ Back", callback_data="main_menu")],
-            [InlineKeyboardButton("🏠 Home", callback_data="main_menu")],
         ]
     )
     try:
@@ -1102,9 +900,12 @@ async def menu_more_info_callback_handle(update: Update, context: CallbackContex
     await query.answer()
 
     text = (
-        "❓ More Info:\n"
-        "Bot-kan wuxuu kuu diyaar yahay AI chatbots, automation, iyo video editing.\n"
-        "Koorsooyinka free iyo paid waxaad ka heli kartaa menu-ga kore."
+        "⚡ <b>Ficil (Call-to-Action)</b>\n\n"
+        "📺 Daawo casharrada YouTube-ka\n"
+        "🤝 Ku biir kooxaha WhatsApp-ka si aad wax uga weydiiso\n"
+        "📱 La soco Telegram-ka si aad u hesho wax cusub\n"
+        "💬 Nagu soo biir bulshada Facebook-ka\n\n"
+        "👇 Fadlan share garee kooxaha WhatsApp-ka iyo Telegram-ka si aan u wada faa'iideysanno!"
     )
     reply_markup = InlineKeyboardMarkup(
         [
@@ -1130,17 +931,15 @@ async def menu_learn_ai_callback_handle(update: Update, context: CallbackContext
     await query.answer()
 
     text = (
-        "Waxaa jira meelo badan oo aan ku bixino casharro free ah AI automation iyo chatbots, "
-        "sidoo kale AI news cusub.\n\n"
-        "Haddii aad ku biirto Telegram class, bot-ku casharrada ayuu kuu keenaa. "
-        "Waxaad keliya qori kartaa “lesson 1” ilaa “lesson 8”."
+        "☘️ Waxaa jira meelo badan oo aan ku bixino casharro free ah AI automation iyo chatbots, "
+        "iyo AI news cusub.\n\n"
+        "Si gaar ah, Telegram class-ka waxaad ka helaysaa casharrada adigoo codsanaya lesson 1 ilaa lesson 8."
     )
     reply_markup = InlineKeyboardMarkup(
         [
-            [InlineKeyboardButton("📚 Classroom", url="https://t.me/+eJxxMKtunMcwODhk")],
-            [InlineKeyboardButton("🎓 Google Classrooms", url="https://classroom.google.com/c/ODAzMzUwNDIyOTU0?cjc=sdvvlyc2")],
+            [InlineKeyboardButton("📚 Classroom", url=get_link("telegram_updates", "https://t.me/+eJxxMKtunMcwODhk"))],
+            [InlineKeyboardButton("🎓 Google Classrooms", url=get_link("google_classroom", "https://classroom.google.com/c/ODAzMzUwNDIyOTU0?cjc=sdvvlyc2"))],
             [InlineKeyboardButton("⬅️ Back", callback_data="main_menu")],
-            [InlineKeyboardButton("🏠 Home", callback_data="main_menu")],
         ]
     )
     try:
@@ -1355,15 +1154,7 @@ def run_bot() -> None:
     application.add_handler(CommandHandler("courses", show_courses_handle, filters=user_filter))
     application.add_handler(CallbackQueryHandler(main_menu_callback_handle, pattern="^main_menu$"))
     application.add_handler(CallbackQueryHandler(menu_courses_callback_handle, pattern="^menu_courses$"))
-    application.add_handler(CallbackQueryHandler(courses_free_callback_handle, pattern="^courses_free$"))
-    application.add_handler(CallbackQueryHandler(courses_paid_callback_handle, pattern="^courses_paid$"))
-    application.add_handler(CallbackQueryHandler(free_ai_chatbot_callback_handle, pattern="^free_ai_chatbot$"))
-    application.add_handler(CallbackQueryHandler(free_ai_video_callback_handle, pattern="^free_ai_video$"))
-    application.add_handler(CallbackQueryHandler(free_ai_automation_callback_handle, pattern="^free_ai_automation$"))
-    application.add_handler(CallbackQueryHandler(free_ai_shopify_callback_handle, pattern="^free_ai_shopify$"))
-    application.add_handler(CallbackQueryHandler(free_adobe_premiere_callback_handle, pattern="^free_adobe_premiere$"))
-    application.add_handler(CallbackQueryHandler(free_basic_language_callback_handle, pattern="^free_basic_language$"))
-    application.add_handler(CallbackQueryHandler(free_intermediate_language_callback_handle, pattern="^free_intermediate_language$"))
+    application.add_handler(CallbackQueryHandler(course_callback_handle, pattern="^course\|"))
     application.add_handler(CallbackQueryHandler(menu_talk_human_callback_handle, pattern="^menu_talk_human$"))
     application.add_handler(CallbackQueryHandler(menu_talk_bot_callback_handle, pattern="^menu_talk_bot$"))
     application.add_handler(CallbackQueryHandler(menu_contacts_callback_handle, pattern="^menu_contacts$"))

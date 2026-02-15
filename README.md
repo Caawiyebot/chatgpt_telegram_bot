@@ -56,7 +56,7 @@ You can deploy your own bot, or use mine: [@jadvebot](https://t.me/jadvebot) (Ou
 - `/retry` – Regenerate last bot answer
 - `/new` – Start new dialog
 - `/mode` – Select chat mode
-- `/courses` – Show Somali course menus
+- `/courses` – Open AI & Technology courses menu
 - `/balance` – Show balance
 - `/settings` – Show settings
 - `/help` – Show help
@@ -79,7 +79,8 @@ You can deploy your own bot, or use mine: [@jadvebot](https://t.me/jadvebot) (Ou
     ```
 
 ## Somali bot menus
-Main menu buttons and external links (WhatsApp, registration, course links) are configured in `config/links.yml`. Use `config/links.example.yml` as a starting point and replace the URLs with your real links.  
+- Full course catalog is configured in `config/courses.yml` (AI40 YouTube, 14-day video editing, and dropshipping lessons).
+- External/social links are configured in `config/links.yml` (copy from `config/links.example.yml`).
 
 ## ❤️ Top donations
 You can be in this list:

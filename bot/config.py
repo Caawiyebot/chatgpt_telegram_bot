@@ -35,6 +35,10 @@ if links_path.exists():
 else:
     links = {}
 
+# courses
+with open(config_dir / "courses.yml", 'r') as f:
+    courses = yaml.safe_load(f)
+
 # models
 with open(config_dir / "models.yml", 'r') as f:
     models = yaml.safe_load(f)
