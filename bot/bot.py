@@ -140,7 +140,7 @@ async def start_handle(update: Update, context: CallbackContext):
     reply_text = (
         "Salaan & soo dhawoow! Waxaan ahay <b>@Baahiyebot</b>.\n"
         "Maxaa kaa caawinayaa?\n\n"
-        "Fadlan isticmaal menu-ga hoose si aad u bilowdo."
+        "Fadlan isticmaal menu-ga hoose si aad u bilowdo ama la xidhiidh @Mfaratoon."
     )
 
     await update.message.reply_text(reply_text, parse_mode=ParseMode.HTML)
